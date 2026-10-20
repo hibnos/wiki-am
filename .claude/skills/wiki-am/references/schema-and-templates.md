@@ -48,21 +48,31 @@ frozen 페이지의 체인 규칙 (`lint.py` 가 `CHAIN` 으로 검사):
 ```yaml
 ---
 id: PAT-003
-type: pattern            # SCHEMA.md pages[].type 과 일치
+type: pattern
 title: description 에 negative 트리거 명시
-status: current          # living: current|stale  /  frozen: current|superseded
+status: current
 created: 2026-09-03
-updated: 2026-09-14      # living 만. frozen 에는 없다
-sources:                 # raw 경로 또는 코드 경로. 비어 있으면 WARNING
+updated: 2026-09-14
+sources:
   - ../../SKILL.md
-related:                 # ID 만. 방향 규칙 적용
+related:
   - SKL-001
-# frozen 전용 (선택): supersedes: ANA-002 / superseded_by: ANA-004
-# 공통 선택: confidence: verified|assumed  (직접 읽은 사실 | 의도·이유를 역산한 추정)
-#            summary: 한 줄 요약 (index 항목 원천)
-#            aliases: [옛 ID, 다른 이름]  (위키 밖 문서를 이관할 때 옛 ID 보존. lint 는 검사하지 않는다)
 ---
 ```
+
+실제 페이지 프론트매터에는 **주석(`#`)을 쓰지 않는다.** 필드 설명은 아래 표에 둔다.
+
+| 필드 | 값 |
+|---|---|
+| `type` | SCHEMA.md `pages[].type` 과 일치 |
+| `status` | living: `current`\|`stale` / frozen: `current`\|`superseded` |
+| `updated` | living 만. frozen 에는 없다 |
+| `sources` | raw 경로 또는 코드 경로(URL 가능). 비어 있으면 WARNING |
+| `related` | ID 만. 방향 규칙 적용 |
+| `supersedes` / `superseded_by` | frozen 전용 (선택). 예 `ANA-002` / `ANA-004` |
+| `confidence` | 공통 선택. `verified`\|`assumed` (직접 읽은 사실 \| 의도·이유를 역산한 추정) |
+| `summary` | 공통 선택. 한 줄 요약 (index 항목 원천) |
+| `aliases` | 공통 선택. `[옛 ID, 다른 이름]` — 위키 밖 문서를 이관할 때 옛 ID 보존. lint 는 검사하지 않는다 |
 
 필드는 공통 7 + kind 별 1 을 넘기지 않는다. 필드가 많으면 지켜지지 않는다.
 

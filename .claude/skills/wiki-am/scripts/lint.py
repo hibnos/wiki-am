@@ -21,6 +21,7 @@ ID_RE = re.compile(r"^[A-Z]{2,5}-\d{3,}$")
 PLACEHOLDER_RE = re.compile(r"\{\{[^}]*\}\}")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 YAML_BLOCK_RE = re.compile(r"```yaml[ \t]*\n(.*?)\n```", re.S)
+MAP_ITEM_RE = re.compile(r"^[A-Za-z_][\w-]*:(\s|$)")
 BL_START, BL_END = "<!-- backlinks:start -->", "<!-- backlinks:end -->"
 BL_RE = re.compile(re.escape(BL_START) + r".*?" + re.escape(BL_END) + r"\n?", re.S)
 
@@ -86,7 +87,7 @@ def parse_yaml_subset(text, inline_comments=False):
             if ind > indent:
                 raise ValueError(f"들여쓰기 오류: {s!r}")
             rest = s[2:].strip()
-            if ":" in rest and not rest.startswith("["):
+            if MAP_ITEM_RE.match(rest):  # `- key: v` 만 매핑. `- https://…` 같은 값은 스칼라
                 items[pos[0]] = [indent + 2, rest]  # 대시 줄을 매핑의 첫 줄로 바꿔 mp 에 맡긴다
                 out.append(mp(indent + 2))
             else:
@@ -102,7 +103,7 @@ def parse_front_matter(text):
     if not m:
         return None, text
     try:
-        fm = parse_yaml_subset(m.group(1))
+        fm = parse_yaml_subset(m.group(1), inline_comments=True)
     except ValueError as e:
         return {"__error__": str(e)}, text[m.end():]
     if not isinstance(fm, dict):
@@ -201,6 +202,11 @@ def collect(root, schema):
             p.id = str(p.fm.get("id")) if p.fm and p.fm.get("id") else None
             pages.append(p)
     return pages
+
+
+def mentions(text, token):
+    """token 이 단어 단위로 들어 있는가. SRC-001 이 SRC-0010 에 매치되지 않게 한다."""
+    return re.search(r"(?<![\w-])" + re.escape(token) + r"(?![\w-])", text) is not None
 
 
 def body_links(page, wiki):
@@ -351,7 +357,7 @@ def lint(root, severity=None, stale_days=180):
                 else:
                     if str(new.fm.get("supersedes", "")) != p.id:
                         add("ERROR", "CHAIN", f"{new.rel}: supersedes 가 {p.id} 를 가리키지 않습니다")
-                    if nb in p.body or (new.id in p.out_pages):
+                    if mentions(p.body, nb) or (new.id in p.out_pages):
                         add("ERROR", "DIRECTION", f"{p.rel}: 옛 판 본문이 새 판 {nb} 를 언급합니다 (시간 방향 오염) — 프론트매터 두 필드만 허용")
         elif p.fm.get("superseded_by"):
             add("ERROR", "CHAIN", f"{p.rel}: superseded_by 가 있으면 status 는 superseded 여야 합니다")
@@ -381,11 +387,11 @@ def lint(root, severity=None, stale_days=180):
             continue
         if not (p.out_ids | p.out_pages) and not in_edges.get(p.id):
             add("WARNING", "ORPHAN", f"{p.id}: 어떤 페이지와도 연결되지 않았습니다 ({p.rel})")
-        if index_text is not None and p.id not in index_text and p.rel not in index_text:
+        if index_text is not None and not mentions(index_text, p.id) and not mentions(index_text, p.rel):
             add("WARNING", "NOT_IN_INDEX", f"{p.id}: index.md 에 없습니다 ({p.rel})")
         elif index_text is not None and p.pdef["kind"] == "frozen" and str(p.fm.get("status")) == "superseded":
-            in_other = p.id in other_sections or p.rel in other_sections
-            in_sup = p.id in sup_section or p.rel in sup_section
+            in_other = mentions(other_sections, p.id) or mentions(other_sections, p.rel)
+            in_sup = mentions(sup_section, p.id) or mentions(sup_section, p.rel)
             if in_other:
                 add("WARNING", "INDEX_SUPERSEDED", f"{p.id}: 대체된 페이지가 index 카테고리 절에 남아 있습니다 — `## 대체된 페이지` 절로 옮기십시오 ({p.rel})")
             elif not in_sup:
@@ -554,7 +560,11 @@ def main(argv):
     if cmd == "lint":
         sev, stale = None, 180
         if "--severity" in rest:
-            sev = rest[rest.index("--severity") + 1]
+            i = rest.index("--severity") + 1
+            sev = rest[i].lower() if i < len(rest) else ""
+            if sev not in ("error", "warning", "info"):
+                print("--severity 는 error|warning|info 중 하나입니다", file=sys.stderr)
+                return 2
         if "--stale-days" in rest:
             stale = int(rest[rest.index("--stale-days") + 1])
         return lint(root, sev, stale)
