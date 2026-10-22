@@ -10,3 +10,7 @@
 # Python bytecode
 __pycache__/
 *.py[cod]
+
+# Local environment and credentials
+.env
+.env.*
