@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wiki AM"
+  short_description: "프로젝트별 새 지식 베이스와 운영 규칙·스키마·검증 도구 생성"
+  default_prompt: "$wiki-am 스킬로 이 프로젝트의 새 지식 베이스를 만들어줘."

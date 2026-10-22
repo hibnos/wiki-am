@@ -1,0 +1,12 @@
+# Local tests and test reports
+/tests/
+/.pytest_cache/
+/.coverage
+/.coverage.*
+/htmlcov/
+/coverage.xml
+/junit.xml
+
+# Python bytecode
+__pycache__/
+*.py[cod]

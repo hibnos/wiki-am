@@ -37,7 +37,7 @@ ls -d wiki-*/ 2>/dev/null
 - **서비스명** (`{service}`): 프로젝트 디렉터리명 등에서 추정한 값을 제시하고 확인받는다. 소문자-kebab-case를 권장한다.
 - Step 1 에서 다른 이름의 `wiki-*` 가 발견됐으면 질문에 그 사실을 함께 알리고, 추가 위키를 만드는 것이 맞는지 확인한다 (같은 프로젝트에 위키가 이미 있을 수 있다).
 
-AskUserQuestion 도구가 있으면 그것으로 묻는다. 선택지는 4개까지이므로 유형은 `msa service` / `monolithic service` / `batch` / `research` 를 선택지로 두고, 질문 설명에 "library/tool, skill·prompt 개발, 그 외 유형은 Other 로 입력" 을 적는다. 도구가 없으면 대화로 묻는다. 사용자가 이미 대화에서 유형과 이름을 밝혔다면 다시 묻지 말고 그 값을 쓴다.
+질문은 **반드시 AskUserQuestion 도구로** 한다 (일반 텍스트 질문 금지 — 프로젝트 hook 이 이 규칙을 강제 주입한다). 선택지는 4개까지이므로 유형은 `msa service` / `monolithic service` / `batch` / `research` 를 선택지로 두고, 질문 설명에 "library/tool, skill·prompt 개발, 그 외 유형은 Other 로 입력" 을 적는다. AskUserQuestion 도구를 쓸 수 없는 환경에서만 대화로 묻는다. 사용자가 이미 대화에서 유형과 이름을 밝혔다면 다시 묻지 말고 그 값을 쓴다.
 
 서비스명이 확정되면 Step 1 결과와 대조한다:
 
@@ -66,9 +66,9 @@ Step 2의 답변(프로젝트 유형)을 기준으로, 그 유형에 맞는 위�
 
 ### Step 4. 폴더 구조 생성
 
-방금 작성한 `wiki-{service}/wiki/CLAUDE.md`에 정의된 구조 **그대로** 폴더와 초기 파일을 만든다. CLAUDE.md가 곧 스키마이므로, 스키마와 실제 구조가 어긋나면 이후 세션이 혼란을 겪는다.
+Step 3b 의 `SCHEMA.md` `pages` 에 선언된 폴더 **그대로** 폴더와 초기 파일을 만든다. 구조의 정본은 SCHEMA.md 이고 `wiki/CLAUDE.md` `## 구조` 절은 그 설명이다 — 셋(SCHEMA.md·CLAUDE.md·실제 폴더)이 어긋나면 이후 세션이 혼란을 겪고 Step 6 lint 가 `SCHEMA_DIR` 로 실패한다.
 
-기본 골격 (유형별 하위 분류는 CLAUDE.md 정의를 따른다):
+기본 골격 (유형별 하위 폴더는 SCHEMA.md `pages` 를 따른다):
 
 ```
 wiki-{service}/
@@ -94,7 +94,7 @@ wiki-{service}/
 
 프로젝트 루트의 `CLAUDE.md`가 이후 세션들이 위키의 존재를 알게 하는 유일한 연결 고리다. **이 단계는 생략할 수 없다.** description 의 "루트 CLAUDE.md 작성·초기화 금지(init 의 일)"는 위키와 무관한 코딩 가이드 작성 요청을 배제하는 조항이며, 여기서 추가하는 위키 연결 1줄에는 적용되지 않는다.
 
-**프로젝트 루트**는 스킬을 실행한 작업 디렉터리(cwd)다. git 루트나 상위 레포 루트가 따로 있어 판단이 갈리면 사용자에게 어느 쪽인지 확인한다.
+**프로젝트 루트**는 스킬을 실행한 작업 디렉터리(cwd)다. git 루트나 상위 레포 루트가 따로 있어 판단이 갈리면 AskUserQuestion 으로 후보 경로(cwd / git 루트)를 선택지로 제시해 어느 쪽인지 확인한다.
 
 **대상 파일은 루트의 `CLAUDE.md` 하나로 고정한다.** Claude Code 는 `.claude/CLAUDE.md` 도 프로젝트 지시 파일로 읽지만, 위키 연결 줄은 **거기에 쓰지 않는다**. `.claude/CLAUDE.md` 가 이미 있고 다른 위키를 가리키는 `**Project knowledge:**` 줄을 담고 있더라도 — 그런 줄은 다른 프로젝트에서 `.claude/` 를 복사해 오면서 딸려온 것일 수 있다 — 그 파일을 판정 근거나 기록 대상으로 삼지 말고 루트 `CLAUDE.md` 를 만들거나 갱신한다. `.claude/CLAUDE.md` 에 낡은 위키를 가리키는 줄이 있으면 **고치지 말고 완료 보고에서 알리기만** 한다.
 > 2026-09-09 wiki-dba 실행이 이 함정에 빠졌다. 루트 `CLAUDE.md` 는 없고 `.claude/CLAUDE.md` 에 다른 위키(`wiki-am/wiki/`)를 가리키는 줄이 남아 있어서, 스킬이 그 파일에 줄을 덧붙이고 루트 `CLAUDE.md` 를 만들지 않았다.

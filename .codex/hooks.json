@@ -1,0 +1,28 @@
+{
+  "description": "프로젝트 스킬 실행 시 Codex 사용자 입력 도구 사용 지침을 주입한다.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/enforce-user-question.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(Bash|exec_command|shell_command|shell)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/enforce-user-question.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
